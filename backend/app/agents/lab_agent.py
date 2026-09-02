@@ -2,6 +2,7 @@ from typing import List
 from app.models.lab import LabTestInput, LabTestResult
 from app.services.classification import classify_result, get_reference_range
 from app.services.routing import route_results
+from app.core.llm_provider import llm_provider
 
 class LabAnalysisAgent:
     """Agent responsible for the core CLASSIFY -> ROUTE -> EXPLAIN logic."""
@@ -33,12 +34,26 @@ class LabAnalysisAgent:
         return route_results(results)
 
     async def explain(self, results: List[LabTestResult]) -> List[LabTestResult]:
-        """EXPLAIN: Generate clinical explanations. 
-        (Integration point established for LLM in Milestone 4)."""
+        """EXPLAIN: Generate clinical explanations using the LLM Provider."""
         for result in results:
             if result.classification != "NORMAL":
-                result.explanation = "LLM explanation placeholder. Integration point ready."
-                result.next_steps = ["LLM next step placeholder."]
+                ref_str = "Not provided"
+                if result.reference_range:
+                    if result.reference_range.text_value:
+                        ref_str = result.reference_range.text_value
+                    else:
+                        ref_str = f"{result.reference_range.low} - {result.reference_range.high}"
+                        
+                llm_resp = await llm_provider.generate_explanation(
+                    test_name=result.test_name,
+                    value=str(result.value),
+                    unit=result.unit,
+                    ref_range=ref_str,
+                    severity=result.classification
+                )
+                
+                result.explanation = llm_resp.explanation
+                result.next_steps = llm_resp.next_steps
             else:
                 result.explanation = "Result is within normal limits."
                 result.next_steps = ["No specific action required."]
@@ -46,13 +61,7 @@ class LabAnalysisAgent:
 
     async def analyze(self, labs: List[LabTestInput]) -> List[LabTestResult]:
         """Main orchestration flow."""
-        # Step 1: CLASSIFY
         classified_results = await self.classify(labs)
-        
-        # Step 2: ROUTE
         routed_results = self.route(classified_results)
-        
-        # Step 3: EXPLAIN
         explained_results = await self.explain(routed_results)
-        
         return explained_results
