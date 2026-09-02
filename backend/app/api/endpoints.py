@@ -1,31 +1,15 @@
 from fastapi import APIRouter
-from app.models.lab import LabAnalysisRequest, LabAnalysisResponse, LabTestResult, AnalysisSummary
-from app.services.classification import classify_result, get_reference_range
-from app.services.routing import route_results
+from app.models.lab import LabAnalysisRequest, LabAnalysisResponse, AnalysisSummary
+from app.agents.lab_agent import LabAnalysisAgent
 import uuid
 
 router = APIRouter()
+agent = LabAnalysisAgent()
 
 @router.post("/analyze_labs", response_model=LabAnalysisResponse)
 async def analyze_labs(request: LabAnalysisRequest):
-    results = []
-    
-    for lab in request.labs:
-        classification = await classify_result(lab)
-        ref_range = await get_reference_range(lab.test_name)
-        
-        result = LabTestResult(
-            test_name=lab.test_name,
-            value=lab.value,
-            unit=lab.unit,
-            classification=classification,
-            reference_range=ref_range,
-            explanation=None, # To be implemented in later milestone
-            next_steps=None
-        )
-        results.append(result)
-        
-    routed_results = route_results(results)
+    # Agent handles the Classify -> Route -> Explain pipeline
+    routed_results = await agent.analyze(request.labs)
     
     # Calculate summary
     summary = AnalysisSummary(
