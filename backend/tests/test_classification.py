@@ -45,3 +45,24 @@ def test_categorical_severity():
     
     # strong positive, Negatif -> CRITICAL
     assert classify_categorical("strong positive", "Negatif") == "CRITICAL"
+
+def test_numeric_boundary_cases():
+    # Exact minimum -> NORMAL
+    assert determine_numeric_severity("Test", 10.0, 10.0, 20.0) == "NORMAL"
+    
+    # Exact maximum -> NORMAL
+    assert determine_numeric_severity("Test", 20.0, 10.0, 20.0) == "NORMAL"
+    
+    # Slightly below minimum without explicit policy (uses 30% rule)
+    # Span is 10. 30% is 3. crit_low is 7.0, crit_high is 23.0
+    # 9.9 -> WARNING
+    assert determine_numeric_severity("Test", 9.9, 10.0, 20.0) == "WARNING"
+    
+    # Below crit_low -> CRITICAL
+    assert determine_numeric_severity("Test", 6.9, 10.0, 20.0) == "CRITICAL"
+    
+    # Slightly above maximum -> WARNING
+    assert determine_numeric_severity("Test", 20.1, 10.0, 20.0) == "WARNING"
+    
+    # Above crit_high -> CRITICAL
+    assert determine_numeric_severity("Test", 23.1, 10.0, 20.0) == "CRITICAL"

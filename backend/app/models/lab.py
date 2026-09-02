@@ -14,6 +14,7 @@ class LabTestInput(BaseModel):
 
 class LabAnalysisRequest(BaseModel):
     labs: List[LabTestInput]
+    client_id: Optional[str] = None
 
 class ReferenceRange(BaseModel):
     low: Optional[float] = None

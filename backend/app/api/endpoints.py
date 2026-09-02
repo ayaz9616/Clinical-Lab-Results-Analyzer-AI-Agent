@@ -1,7 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 from app.models.lab import LabAnalysisRequest, LabAnalysisResponse, LabTestResult, AnalysisSummary
 from app.agents.lab_agent import LabAnalysisAgent
+from app.services.websocket import manager
 from google import genai
 import uuid
 
@@ -11,7 +12,7 @@ agent = LabAnalysisAgent()
 @router.post("/analyze_labs", response_model=LabAnalysisResponse)
 async def analyze_labs(request: LabAnalysisRequest):
     # Agent handles the Classify -> Route -> Explain pipeline
-    routed_results = await agent.analyze(request.labs)
+    routed_results = await agent.analyze(request.labs, request.client_id)
     
     # Calculate summary
     summary = AnalysisSummary(
@@ -46,3 +47,12 @@ async def test_llm(request: TestLLMRequest):
         return TestLLMResponse(answer=response.text)
     except Exception as e:
         return TestLLMResponse(answer=f"Error: {str(e)}")
+
+@router.websocket("/ws/workflow/{client_id}")
+async def websocket_endpoint(websocket: WebSocket, client_id: str):
+    await manager.connect(websocket, client_id)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(client_id)

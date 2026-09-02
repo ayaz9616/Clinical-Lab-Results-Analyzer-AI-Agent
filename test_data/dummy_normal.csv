@@ -1,0 +1,6 @@
+Test_Name,Result,Unit,Reference_Range,Min_Reference,Max_Reference,Status,Comment,Recommended_Followup
+Ferritin,82.5,ng/mL,15.0 - 150.0,15.0,150.0,NORMAL,,
+Glikozile Hemoglobin (HbA1c),5.4,%,4.0 - 6.0,4.0,6.0,NORMAL,,
+Trombosit,310,10^3/uL,150 - 450,150,450,NORMAL,,
+Hemoglobin,13.4,g/dL,12 - 15,12,15,NORMAL,,
+Eritrosit (Strip),Negatif,,-,,,NORMAL,,

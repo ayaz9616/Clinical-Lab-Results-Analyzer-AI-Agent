@@ -1,0 +1,8 @@
+Test_Name,Result,Unit,Reference_Range,Min_Reference,Max_Reference,Status,Comment,Recommended_Followup
+Ferritin,12,ng/mL,15.0 - 150.0,15.0,150.0,WARNING,,
+Glikozile Hemoglobin (HbA1c),6.2,%,4.0 - 6.0,4.0,6.0,WARNING,,
+Nötrofil%,72.5,%,50 - 70,50,70,WARNING,,
+Hemoglobin,11.6,g/dL,12 - 15,12,15,WARNING,,
+Eritrosit (Strip),1+,,Negatif,,,WARNING,,
+Protein (Strip),1+,,Negatif,,,WARNING,,
+Nitrit (Strip),Pozitif,,Negatif,,,WARNING,,

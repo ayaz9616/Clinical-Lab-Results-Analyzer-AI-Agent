@@ -13,14 +13,17 @@ if not logger.handlers:
 
 def determine_numeric_severity(test_name: str, val: float, low: float, high: float) -> str:
     """
+    PROJECT CLASSIFICATION POLICY:
     Configurable classification policy for numeric tests to distinguish WARNING vs CRITICAL.
-    This replaces arbitrary percentage thresholds with explicit, medically-aligned rules 
-    (or dataset-specific expected thresholds for this assignment).
+    This replaces arbitrary percentage thresholds with explicit, assignment-specific rules.
+    NOTE: This is NOT a universal medical standard and should not be used as official medical guidance.
+    It does not invent reference ranges; it strictly classifies values that are already 
+    outside the supplied reference range into WARNING or CRITICAL severity.
     """
     if low <= val <= high:
         return "NORMAL"
         
-    # Explicit policy map defining the boundary where a WARNING becomes CRITICAL.
+    # Explicit PROJECT POLICY map defining the boundary where a WARNING becomes CRITICAL.
     # Format: "Test Name": (crit_low, crit_high)
     POLICY = {
         "Glukoz": (50.0, 200.0),                  # 280 is CRITICAL

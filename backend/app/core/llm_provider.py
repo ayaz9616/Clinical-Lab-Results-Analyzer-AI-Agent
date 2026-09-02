@@ -33,15 +33,21 @@ class LLMProvider:
             
         prompt = f"""
         You are a clinical laboratory AI assistant.
-        Analyze the following lab result:
+        Analyze the following laboratory test result:
         Test: {test_name}
         Value: {value} {unit}
         Reference Range: {ref_range}
-        Severity: {severity}
+        Backend-Determined Severity: {severity}
         
-        Explain what this result means in clinically sensible language. Do not make definitive diagnoses.
-        Use cautious phrasing like "may be associated with" or "can indicate".
-        Also suggest next steps (e.g., "Discuss with your physician", "Consider follow-up testing").
+        Instructions:
+        1. Explain what this result means in clinically sensible language based ONLY on the supplied information.
+        2. If the severity is NORMAL, explain that the value is within the reference interval and briefly explain what the test measures.
+        3. Do NOT make definitive diagnoses. Do NOT diagnose a disease as certain. Do NOT invent missing patient information.
+        4. Do NOT invent or substitute reference ranges. Use ONLY the provided reference range.
+        5. Do NOT override the Backend-Determined Severity. The backend classification is authoritative.
+        6. Use cautious phrasing like "may be associated with" or "can indicate".
+        7. Clearly distinguish between a general explanation and a specific diagnosis.
+        8. Suggest reasonable next steps (e.g., "Discuss with your healthcare provider", "Continue routine monitoring"). Do not pretend to be the patient's clinician.
         
         Return your response strictly in the following JSON format:
         {{

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Header from './components/Header';
 import LabInput from './components/LabInput';
 import AnalysisSummary from './components/AnalysisSummary';
@@ -13,37 +13,26 @@ function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [systemState, setSystemState] = useState(null);
 
-  const simulateWorkflowState = async () => {
-    setSystemState({ nodes: ['input', 'agent'], edges: ['input-agent'] });
-    await new Promise(r => setTimeout(r, 600));
-    
-    setSystemState({ nodes: ['classify', 'mcp'], edges: ['agent-classify', 'agent-mcp'] });
-    await new Promise(r => setTimeout(r, 800));
-    
-    setSystemState({ nodes: ['classify', 'ref'], edges: ['mcp-ref'] });
-    await new Promise(r => setTimeout(r, 600));
-    
-    setSystemState({ nodes: ['route'], edges: ['classify-route', 'ref-route'] });
-    await new Promise(r => setTimeout(r, 600));
-    
-    setSystemState({ nodes: ['critical', 'warning', 'normal'], edges: ['route-critical', 'route-warning', 'route-normal'] });
-    await new Promise(r => setTimeout(r, 600));
-    
-    setSystemState({ nodes: ['explain'], edges: ['critical-explain', 'warning-explain', 'normal-explain'] });
-  };
+  const clientId = useMemo(() => Math.random().toString(36).substring(2, 15), []);
 
+  useEffect(() => {
+    const ws = new WebSocket(`ws://localhost:8000/ws/workflow/${clientId}`);
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      setSystemState(data);
+    };
+    return () => ws.close();
+  }, [clientId]);
   const handleDataLoaded = async (data) => {
     setRawLabs(data);
     setIsProcessing(true);
     setAnalysisResults(null);
     
-    const animationPromise = simulateWorkflowState();
-    
     try {
       const response = await fetch('http://localhost:8000/analyze_labs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ labs: data })
+        body: JSON.stringify({ labs: data, client_id: clientId })
       });
       
       if (!response.ok) {
@@ -52,9 +41,6 @@ function App() {
       
       const results = await response.json();
       
-      await animationPromise;
-      
-      setSystemState({ nodes: ['results'], edges: ['explain-results'] });
       setAnalysisResults(results);
       
       setTimeout(() => setSystemState(null), 3000);

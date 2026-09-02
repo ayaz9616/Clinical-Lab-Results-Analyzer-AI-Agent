@@ -1,0 +1,7 @@
+Test_Name,Result,Unit,Reference_Range,Min_Reference,Max_Reference,Status,Comment,Recommended_Followup
+Glukoz,280,mg/dL,70 - 100,70,100,CRITICAL,,
+Trombosit,55,10^3/uL,150 - 450,150,450,CRITICAL,,
+Hemoglobin,7.8,g/dL,12 - 15,12,15,CRITICAL,,
+Serbest T4,0.35,ng/dL,0.87 - 1.7,0.87,1.7,CRITICAL,,
+Glukoz (Strip),3+,,Negatif,,,CRITICAL,,
+Keton (Strip),3+,,Negatif,,,CRITICAL,,
