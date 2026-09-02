@@ -4,6 +4,7 @@ import LabInput from './components/LabInput';
 import AnalysisSummary from './components/AnalysisSummary';
 import WorkflowMap from './components/WorkflowMap';
 import ResultsDisplay from './components/ResultsDisplay';
+import ApiTester from './components/ApiTester';
 import './index.css';
 
 function App() {
@@ -72,6 +73,7 @@ function App() {
       
       <div className="left-sidebar">
         <LabInput onDataLoaded={handleDataLoaded} isProcessing={isProcessing} />
+        <ApiTester />
         <AnalysisSummary data={rawLabs} results={analysisResults} />
       </div>
       

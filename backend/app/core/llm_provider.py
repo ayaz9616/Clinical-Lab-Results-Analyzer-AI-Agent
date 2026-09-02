@@ -3,6 +3,9 @@ import json
 from google import genai
 from pydantic import BaseModel
 from typing import List
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class ExplanationResponse(BaseModel):
     explanation: str
@@ -11,16 +14,22 @@ class ExplanationResponse(BaseModel):
 class LLMProvider:
     def __init__(self):
         self.api_key = os.getenv("LLM_API_KEY", "")
-        self.model_name = os.getenv("LLM_MODEL", "gemini-2.5-flash")
+        self.model_name = os.getenv("LLM_MODEL", "gemini-3.6-flash")
         
         self.client = genai.Client(api_key=self.api_key) if self.api_key else None
 
     async def generate_explanation(self, test_name: str, value: str, unit: str, ref_range: str, severity: str) -> ExplanationResponse:
-        if not self.client:
+        # Dynamically reload key in case it was added to .env while server was running
+        load_dotenv()
+        current_key = os.getenv("LLM_API_KEY", "")
+        
+        if not current_key:
             return ExplanationResponse(
                 explanation="[MOCK] LLM API key not configured. The result is outside normal parameters.",
                 next_steps=["[MOCK] Consult a healthcare professional."]
             )
+            
+        client = genai.Client(api_key=current_key)
             
         prompt = f"""
         You are a clinical laboratory AI assistant.
@@ -45,7 +54,7 @@ class LLMProvider:
             # We use the blocking call in an async context, ideally we'd use an async client
             # But the genai SDK handles it cleanly or we can wrap it if needed. 
             # For this MVP, standard execution is fine since it's a lightweight backend.
-            response = self.client.models.generate_content(
+            response = client.models.generate_content(
                 model=self.model_name,
                 contents=prompt,
                 config=genai.types.GenerateContentConfig(

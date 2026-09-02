@@ -5,6 +5,12 @@ class LabTestInput(BaseModel):
     test_name: str
     value: Any
     unit: str
+    reference_range_str: Optional[str] = None
+    min_reference: Optional[float] = None
+    max_reference: Optional[float] = None
+    status: Optional[str] = None
+    comment: Optional[str] = None
+    recommended_followup: Optional[str] = None
 
 class LabAnalysisRequest(BaseModel):
     labs: List[LabTestInput]

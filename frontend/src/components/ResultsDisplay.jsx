@@ -23,7 +23,7 @@ const ResultCard = ({ result }) => {
 
   const refRangeStr = result.reference_range 
     ? (result.reference_range.text_value || `${result.reference_range.low} - ${result.reference_range.high}`)
-    : 'N/A';
+    : 'REFERENCE_RANGE_UNAVAILABLE';
 
   return (
     <div style={{ 
@@ -48,7 +48,7 @@ const ResultCard = ({ result }) => {
           <div>
             <div style={{ fontWeight: 600 }}>{result.test_name}</div>
             <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-              Result: <span style={{ color: 'var(--text-primary)' }}>{result.value} {result.unit}</span> | Ref: {refRangeStr}
+              Result: <span style={{ color: 'var(--text-primary)' }}>{result.value} {result.unit ? result.unit : ''}</span> | Ref: {refRangeStr}
             </div>
           </div>
         </div>

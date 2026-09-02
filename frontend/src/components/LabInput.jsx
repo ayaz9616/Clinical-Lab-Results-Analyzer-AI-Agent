@@ -37,20 +37,31 @@ export default function LabInput({ onDataLoaded, isProcessing }) {
           return;
         }
 
-        const requiredCols = ['Test Adı', 'Sonuç', 'Birim'];
+        const requiredCols = ['Test_Name', 'Result', 'Unit'];
         const hasCols = requiredCols.every(col => Object.keys(data[0]).includes(col));
         
         if (!hasCols) {
           setFileStatus('error');
-          setErrorMessage('Missing required columns: Test Adı, Sonuç, Birim');
+          setErrorMessage('Missing required columns: Test_Name, Result, Unit');
           return;
         }
 
-        const cleanedData = data.map(row => ({
-          test_name: row['Test Adı'],
-          value: row['Sonuç'],
-          unit: row['Birim']
-        })).filter(row => row.test_name && row.value !== undefined && row.value !== ''); 
+        const cleanedData = data.map(row => {
+          let min_ref = parseFloat(row['Min_Reference']);
+          let max_ref = parseFloat(row['Max_Reference']);
+          
+          return {
+            test_name: row['Test_Name'],
+            value: row['Result'],
+            unit: row['Unit'] === '-' ? '' : row['Unit'],
+            reference_range_str: row['Reference_Range'] || null,
+            min_reference: isNaN(min_ref) ? null : min_ref,
+            max_reference: isNaN(max_ref) ? null : max_ref,
+            status: row['Status'] || null,
+            comment: row['Comment'] || null,
+            recommended_followup: row['Recommended_Followup'] || null
+          };
+        }).filter(row => row.test_name && row.value !== undefined && row.value !== '');
 
         setParsedLabs(cleanedData);
         setFileStatus('loaded');

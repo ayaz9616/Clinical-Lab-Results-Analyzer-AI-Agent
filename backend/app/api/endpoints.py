@@ -1,6 +1,8 @@
 from fastapi import APIRouter
-from app.models.lab import LabAnalysisRequest, LabAnalysisResponse, AnalysisSummary
+from pydantic import BaseModel
+from app.models.lab import LabAnalysisRequest, LabAnalysisResponse, LabTestResult, AnalysisSummary
 from app.agents.lab_agent import LabAnalysisAgent
+from google import genai
 import uuid
 
 router = APIRouter()
@@ -25,3 +27,22 @@ async def analyze_labs(request: LabAnalysisRequest):
         summary=summary,
         results=routed_results
     )
+
+class TestLLMRequest(BaseModel):
+    api_key: str
+    question: str
+
+class TestLLMResponse(BaseModel):
+    answer: str
+
+@router.post("/test_llm", response_model=TestLLMResponse)
+async def test_llm(request: TestLLMRequest):
+    try:
+        client = genai.Client(api_key=request.api_key)
+        response = client.models.generate_content(
+            model="gemini-3.6-flash",
+            contents=request.question
+        )
+        return TestLLMResponse(answer=response.text)
+    except Exception as e:
+        return TestLLMResponse(answer=f"Error: {str(e)}")
