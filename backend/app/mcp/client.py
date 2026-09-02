@@ -3,11 +3,15 @@ import os
 from typing import Dict, Any
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+import logging
+
+logger = logging.getLogger(__name__)
 
 PYTHON_EXEC = sys.executable
 
 async def execute_mcp_tool(tool_name: str, arguments: Dict[str, Any]) -> str:
     """Executes a tool on the local MCP server via stdio."""
+    logger.info(f"[Agent -> MCP] Calling tool: {tool_name} with args: {arguments}")
     try:
         # Determine the backend root directory to add to PYTHONPATH
         # This ensures 'app.mcp.run_server' can be found when executed as a module
@@ -26,6 +30,7 @@ async def execute_mcp_tool(tool_name: str, arguments: Dict[str, Any]) -> str:
             async with ClientSession(read, write) as session:
                 await session.initialize()
                 result = await session.call_tool(tool_name, arguments=arguments)
+                logger.info(f"[MCP -> Agent] Received response for tool: {tool_name}")
                 if result.isError:
                     return f"MCP Tool Error: {result.content}"
                 

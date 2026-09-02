@@ -1,3 +1,4 @@
+import asyncio
 from typing import List, Optional
 from app.models.lab import LabTestInput, LabTestResult
 from app.services.classification import classify_result, get_reference_range
@@ -34,9 +35,8 @@ class LabAnalysisAgent:
         """ROUTE: Group results by severity."""
         return route_results(results)
 
-    async def explain(self, results: List[LabTestResult]) -> List[LabTestResult]:
-        """EXPLAIN: Generate clinical explanations using the LLM Provider."""
-        for result in results:
+    async def _explain_single(self, result: LabTestResult, semaphore: asyncio.Semaphore, api_key: Optional[str] = None) -> None:
+        async with semaphore:
             ref_str = "Not provided"
             if result.reference_range:
                 if result.reference_range.text_value:
@@ -49,14 +49,24 @@ class LabAnalysisAgent:
                 value=str(result.value),
                 unit=result.unit,
                 ref_range=ref_str,
-                severity=result.classification
+                severity=result.classification,
+                api_key=api_key
             )
             
             result.explanation = llm_resp.explanation
             result.next_steps = llm_resp.next_steps
+
+    async def explain(self, results: List[LabTestResult], api_key: Optional[str] = None) -> List[LabTestResult]:
+        """EXPLAIN: Generate clinical explanations using the LLM Provider."""
+        MAX_CONCURRENT_LLM_REQUESTS = 5
+        semaphore = asyncio.Semaphore(MAX_CONCURRENT_LLM_REQUESTS)
+        
+        tasks = [self._explain_single(result, semaphore, api_key) for result in results]
+        await asyncio.gather(*tasks)
+        
         return results
 
-    async def analyze(self, labs: List[LabTestInput], client_id: Optional[str] = None) -> List[LabTestResult]:
+    async def analyze(self, labs: List[LabTestInput], client_id: Optional[str] = None, api_key: Optional[str] = None) -> List[LabTestResult]:
         """Main orchestration flow."""
         if client_id:
             await manager.send_state(client_id, {"nodes": ["input", "agent"], "edges": ["input-agent"]})
@@ -84,7 +94,7 @@ class LabAnalysisAgent:
                 
             await manager.send_state(client_id, {"nodes": active_nodes, "edges": active_edges})
             
-        explained_results = await self.explain(routed_results)
+        explained_results = await self.explain(routed_results, api_key)
         
         if client_id:
             await manager.send_state(client_id, {"nodes": ["results"], "edges": ["explain-results"]})

@@ -1,19 +1,41 @@
-import React from 'react';
-import { Activity } from 'lucide-react';
+import { Activity, BookOpen, LayoutTemplate } from 'lucide-react';
 
-export default function Header() {
+export default function Header({ currentView, setCurrentView }) {
   return (
     <header className="header-area">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <Activity size={24} color="var(--accent-primary)" />
           <div>
-            <h1 className="header-title">Clinical Lab Intelligence</h1>
-            <div className="header-subtitle">AI-powered laboratory result analysis</div>
+            <h1 className="header-title">Clinical Lab Intelligence {currentView === 'docs' && '/ Docs'}</h1>
+            {currentView !== 'docs' && <div className="header-subtitle">AI-powered laboratory result analysis</div>}
           </div>
         </div>
-        <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', maxWidth: '500px', textAlign: 'right', fontStyle: 'italic', paddingLeft: '16px' }}>
-          This application is for informational and demonstration purposes only. It does not provide medical diagnosis or treatment recommendations and is not a substitute for evaluation by a qualified healthcare professional. Laboratory results should be interpreted in the context of the patient's clinical history and laboratory-specific reference ranges.
+        
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <button 
+            onClick={() => setCurrentView(currentView === 'docs' ? 'app' : 'docs')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: 'var(--surface-active)',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--surface-border)',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '0.85rem',
+              fontWeight: 500,
+              transition: 'all 0.2s ease'
+            }}
+          >
+            {currentView === 'docs' ? (
+              <><LayoutTemplate size={16} /> Dashboard</>
+            ) : (
+              <><BookOpen size={16} /> Docs</>
+            )}
+          </button>
         </div>
       </div>
     </header>

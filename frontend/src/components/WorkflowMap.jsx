@@ -76,21 +76,20 @@ const Edge = ({ sx, sy, tx, ty, active = false, color = 'var(--accent-primary)' 
 };
 
 export default function WorkflowMap({ systemState = null }) {
-  // systemState will be passed from parent in Milestone 9.
-  // For Milestone 6, we'll demonstrate a simulated flow if no state is provided.
   const [mockState, setMockState] = useState({ nodes: [], edges: [] });
   
   useEffect(() => {
     if (systemState) return;
     
-    // Demonstration loop
+    // Demonstration loop matching the new linear flow
     let step = 0;
     const stages = [
       { nodes: ['input'], edges: [] },
       { nodes: ['agent'], edges: ['input-agent'] },
-      { nodes: ['classify', 'mcp'], edges: ['agent-classify', 'agent-mcp'] },
-      { nodes: ['classify', 'ref'], edges: ['mcp-ref'] },
-      { nodes: ['route'], edges: ['classify-route', 'ref-route'] },
+      { nodes: ['mcp'], edges: ['agent-mcp'] },
+      { nodes: ['ref'], edges: ['mcp-ref'] },
+      { nodes: ['classify'], edges: ['ref-classify'] },
+      { nodes: ['route'], edges: ['classify-route'] },
       { nodes: ['critical', 'warning', 'normal'], edges: ['route-critical', 'route-warning', 'route-normal'] },
       { nodes: ['explain'], edges: ['critical-explain', 'warning-explain', 'normal-explain'] },
       { nodes: ['results'], edges: ['explain-results'] }
@@ -107,8 +106,18 @@ export default function WorkflowMap({ systemState = null }) {
   const currentNodes = systemState?.nodes || mockState.nodes;
   const currentEdges = systemState?.edges || mockState.edges;
 
+  // The backend might send grouped events like 'agent-classify'. 
+  // We map them to light up the full linear path for visual continuity.
   const nodeIsActive = (id) => currentNodes.includes(id);
   const edgeIsActive = (id) => currentEdges.includes(id);
+
+  const isMcpActive = nodeIsActive('mcp') || nodeIsActive('classify');
+  const isRefActive = nodeIsActive('ref') || nodeIsActive('classify');
+
+  const edgeAgentToMcp = edgeIsActive('agent-mcp') || edgeIsActive('agent-classify');
+  const edgeMcpToRef = edgeIsActive('mcp-ref') || edgeIsActive('agent-classify') || edgeIsActive('agent-mcp');
+  const edgeRefToClassify = edgeIsActive('ref-classify') || edgeIsActive('agent-classify') || edgeIsActive('classify-route');
+  const edgeClassifyToRoute = edgeIsActive('classify-route') || edgeIsActive('ref-route');
 
   return (
     <div className="glass-panel" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -117,7 +126,7 @@ export default function WorkflowMap({ systemState = null }) {
         Live Architecture Workflow
       </h2>
       <div style={{ flex: 1, width: '100%', position: 'relative' }}>
-        <svg viewBox="0 0 800 800" style={{ width: '100%', height: '100%' }}>
+        <svg viewBox="0 0 800 950" style={{ width: '100%', height: '100%' }}>
           <defs>
             <style>
               {`
@@ -142,39 +151,37 @@ export default function WorkflowMap({ systemState = null }) {
           
           {/* Edges */}
           <Edge sx={400} sy={74} tx={400} ty={126} active={edgeIsActive('input-agent')} />
-          <Edge sx={400} sy={174} tx={200} ty={226} active={edgeIsActive('agent-classify')} />
-          <Edge sx={400} sy={174} tx={600} ty={226} active={edgeIsActive('agent-mcp')} />
-          <Edge sx={600} sy={274} tx={600} ty={326} active={edgeIsActive('mcp-ref')} />
+          <Edge sx={400} sy={174} tx={400} ty={226} active={edgeAgentToMcp} />
+          <Edge sx={400} sy={274} tx={400} ty={326} active={edgeMcpToRef} />
+          <Edge sx={400} sy={374} tx={400} ty={426} active={edgeRefToClassify} />
+          <Edge sx={400} sy={474} tx={400} ty={526} active={edgeClassifyToRoute} />
           
-          <Edge sx={200} sy={274} tx={400} ty={426} active={edgeIsActive('classify-route')} />
-          <Edge sx={600} sy={374} tx={400} ty={426} active={edgeIsActive('ref-route')} />
+          <Edge sx={400} sy={574} tx={200} ty={626} active={edgeIsActive('route-critical')} color="var(--color-critical)" />
+          <Edge sx={400} sy={574} tx={400} ty={626} active={edgeIsActive('route-warning')} color="var(--color-warning)" />
+          <Edge sx={400} sy={574} tx={600} ty={626} active={edgeIsActive('route-normal')} color="var(--color-normal)" />
           
-          <Edge sx={400} sy={474} tx={200} ty={526} active={edgeIsActive('route-critical')} color="var(--color-critical)" />
-          <Edge sx={400} sy={474} tx={400} ty={526} active={edgeIsActive('route-warning')} color="var(--color-warning)" />
-          <Edge sx={400} sy={474} tx={600} ty={526} active={edgeIsActive('route-normal')} color="var(--color-normal)" />
+          <Edge sx={200} sy={674} tx={400} ty={726} active={edgeIsActive('critical-explain')} color="var(--color-critical)" />
+          <Edge sx={400} sy={674} tx={400} ty={726} active={edgeIsActive('warning-explain')} color="var(--color-warning)" />
+          <Edge sx={600} sy={674} tx={400} ty={726} active={edgeIsActive('normal-explain')} color="var(--color-normal)" />
           
-          <Edge sx={200} sy={574} tx={400} ty={626} active={edgeIsActive('critical-explain')} color="var(--color-critical)" />
-          <Edge sx={400} sy={574} tx={400} ty={626} active={edgeIsActive('warning-explain')} color="var(--color-warning)" />
-          <Edge sx={600} sy={574} tx={400} ty={626} active={edgeIsActive('normal-explain')} color="var(--color-normal)" />
-          
-          <Edge sx={400} sy={674} tx={400} ty={726} active={edgeIsActive('explain-results')} />
+          <Edge sx={400} sy={774} tx={400} ty={826} active={edgeIsActive('explain-results')} />
 
           {/* Nodes */}
-          <Node id="input" x={400} y={50} label="DATA INPUT" icon={Database} status={nodeIsActive('input') ? 'processing' : 'idle'} />
+          <Node id="input" x={400} y={50} width={260} label="DATA INPUT (Manual Form / CSV)" icon={Database} status={nodeIsActive('input') ? 'processing' : 'idle'} />
           <Node id="agent" x={400} y={150} label="AGENT" icon={Bot} status={nodeIsActive('agent') ? 'processing' : 'idle'} />
           
-          <Node id="classify" x={200} y={250} label="CLASSIFY" icon={Activity} status={nodeIsActive('classify') ? 'processing' : 'idle'} />
-          <Node id="mcp" x={600} y={250} label="MCP" icon={BrainCircuit} status={nodeIsActive('mcp') ? 'processing' : 'idle'} />
-          <Node id="ref" x={600} y={350} label="REFERENCE RANGE" icon={Database} status={nodeIsActive('ref') ? 'processing' : 'idle'} />
+          <Node id="mcp" x={400} y={250} label="MCP" icon={BrainCircuit} status={isMcpActive ? 'processing' : 'idle'} />
+          <Node id="ref" x={400} y={350} label="REFERENCE RANGE" icon={Database} status={isRefActive ? 'processing' : 'idle'} />
+          <Node id="classify" x={400} y={450} label="CLASSIFICATION" icon={Activity} status={nodeIsActive('classify') ? 'processing' : 'idle'} />
           
-          <Node id="route" x={400} y={450} label="ROUTE" icon={Split} status={nodeIsActive('route') ? 'processing' : 'idle'} />
+          <Node id="route" x={400} y={550} label="ROUTE" icon={Split} status={nodeIsActive('route') ? 'processing' : 'idle'} />
           
-          <Node id="critical" x={200} y={550} label="CRITICAL" icon={AlertCircle} width={120} status={nodeIsActive('critical') ? 'processing' : 'idle'} />
-          <Node id="warning" x={400} y={550} label="WARNING" icon={AlertTriangle} width={120} status={nodeIsActive('warning') ? 'processing' : 'idle'} />
-          <Node id="normal" x={600} y={550} label="NORMAL" icon={CheckCircle} width={120} status={nodeIsActive('normal') ? 'processing' : 'idle'} />
+          <Node id="critical" x={200} y={650} label="CRITICAL" icon={AlertCircle} width={120} status={nodeIsActive('critical') ? 'processing' : 'idle'} />
+          <Node id="warning" x={400} y={650} label="WARNING" icon={AlertTriangle} width={120} status={nodeIsActive('warning') ? 'processing' : 'idle'} />
+          <Node id="normal" x={600} y={650} label="NORMAL" icon={CheckCircle} width={120} status={nodeIsActive('normal') ? 'processing' : 'idle'} />
           
-          <Node id="explain" x={400} y={650} label="EXPLAIN (LLM)" icon={MessageSquareText} status={nodeIsActive('explain') ? 'processing' : 'idle'} />
-          <Node id="results" x={400} y={750} label="RESULTS" icon={FileText} status={nodeIsActive('results') ? 'success' : 'idle'} />
+          <Node id="explain" x={400} y={750} label="EXPLAIN (LLM)" icon={MessageSquareText} status={nodeIsActive('explain') ? 'processing' : 'idle'} />
+          <Node id="results" x={400} y={850} label="RESULTS" icon={FileText} status={nodeIsActive('results') ? 'success' : 'idle'} />
         </svg>
       </div>
     </div>

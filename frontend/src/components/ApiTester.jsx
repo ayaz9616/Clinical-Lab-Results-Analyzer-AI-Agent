@@ -1,98 +1,34 @@
-import React, { useState } from 'react';
-import { KeyRound, Send } from 'lucide-react';
+import React from 'react';
+import { KeyRound } from 'lucide-react';
 
-export default function ApiTester() {
-  const [apiKey, setApiKey] = useState('');
-  const [question, setQuestion] = useState('Say hello to the clinical lab agent!');
-  const [response, setResponse] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleTest = async () => {
-    if (!apiKey) {
-      setResponse("Please enter an API key.");
-      return;
-    }
-    
-    setIsLoading(true);
-    setResponse('');
-    
-    try {
-      const res = await fetch('http://localhost:8000/test_llm', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ api_key: apiKey, question: question })
-      });
-      
-      const data = await res.json();
-      setResponse(data.answer);
-    } catch (err) {
-      setResponse(`Error: ${err.message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+export default function ApiTester({ userApiKey, setApiKey }) {
   return (
     <div className="glass-panel" style={{ padding: '24px' }}>
-      <h2 style={{ fontSize: '1rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <h2 style={{ fontSize: '1rem', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
         <KeyRound size={18} color="var(--accent-secondary)" />
-        API Key Tester
+        Bring Your Own Key (BYOK)
       </h2>
       
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.5', margin: 0 }}>
+          My server's free tier Gemini quota may run out during evaluation. To guarantee execution, you can securely provide your own API key below. This key will be used for your analysis requests and is not stored on the server.
+        </p>
         <input 
-          type="text" 
+          type="password" 
           placeholder="Enter Gemini API Key..." 
-          value={apiKey}
+          value={userApiKey}
           onChange={(e) => setApiKey(e.target.value)}
           style={{
             background: 'rgba(255, 255, 255, 0.05)',
             border: '1px solid var(--surface-border)',
             borderRadius: '6px',
-            padding: '8px 12px',
+            padding: '10px 12px',
             color: 'var(--text-primary)',
-            fontSize: '0.875rem'
-          }}
-        />
-        
-        <input 
-          type="text" 
-          placeholder="Test question..." 
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid var(--surface-border)',
-            borderRadius: '6px',
-            padding: '8px 12px',
-            color: 'var(--text-primary)',
-            fontSize: '0.875rem'
-          }}
-        />
-        
-        <button 
-          className="btn-primary" 
-          onClick={handleTest} 
-          disabled={isLoading || !apiKey}
-          style={{ padding: '8px 16px', fontSize: '0.875rem' }}
-        >
-          {isLoading ? 'Testing...' : 'Test Key'}
-        </button>
-        
-        {response && (
-          <div style={{ 
-            marginTop: '8px', 
-            padding: '12px', 
-            background: 'rgba(0,0,0,0.2)', 
-            borderRadius: '6px',
             fontSize: '0.875rem',
-            color: response.startsWith('Error') ? 'var(--color-critical)' : 'var(--text-primary)',
-            maxHeight: '100px',
-            overflowY: 'auto'
-          }}>
-            {response}
-          </div>
-        )}
+            outline: 'none',
+            width: '100%'
+          }}
+        />
       </div>
     </div>
   );

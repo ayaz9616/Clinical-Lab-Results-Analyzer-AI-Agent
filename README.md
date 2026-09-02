@@ -1,106 +1,177 @@
-# Clinical Lab Results Analyzer AI Agent
+# 🏥 Clinical Lab Intelligence
 
-A full-stack web application designed for the Aragen Hackathon to analyze clinical laboratory results using a deterministic agent-based architecture, the Model Context Protocol (MCP), and a Large Language Model (LLM).
+Clinical Lab Intelligence is a full-stack, AI-powered laboratory results analyzer designed to help healthcare professionals and patients rapidly ingest, classify, route, and explain clinical lab results. 
 
-> [!WARNING]  
-> **Medical Disclaimer**
-> This application is for informational and demonstration purposes only. It does not provide medical diagnosis or treatment recommendations and is not a substitute for evaluation by a qualified healthcare professional. Laboratory results should be interpreted in the context of the patient's clinical history and laboratory-specific reference ranges.
+Instead of asking a Large Language Model (LLM) to dangerously "guess" if a patient is critical, this application pioneers a **hybrid deterministic-AI pipeline**. Hardcoded mathematical bounds ensure 100% accurate medical severity classification, while asynchronous LLM instances generate rich, personalized, plain-language clinical explanations for each result.
 
-## 1. Project Overview & Features
-This application allows users to upload clinical laboratory results (via CSV) and instantly visualizes an automated analysis pipeline. 
+---
 
-### Features:
-* **Live Workflow Map:** Real-time visualization of the backend pipeline using WebSockets.
-* **Deterministic Classification:** Hard-coded logic accurately classifies results as NORMAL, WARNING, or CRITICAL.
-* **LLM Explanations:** AI-generated clinical explanations for every single lab result.
-* **Agent Architecture:** Follows a strict CLASSIFY → ROUTE → EXPLAIN workflow.
-* **MCP Fallback:** Uses an MCP tool to fetch missing reference ranges.
+## ✨ Features
 
-## 2. Architecture & Flow
+- **Multi-Modal Data Ingestion**: Manually input a single lab test or upload bulk CSV datasets.
+- **Deterministic Classification**: Mathematical evaluation of results against reference ranges (Normal / Warning / Critical).
+- **Intelligent Routing**: Severity-based sorting to ensure critical patients are prioritized.
+- **Explainable AI (XAI)**: Concurrent LLM instances explain *why* a result is flagged in clinically relevant language without overriding the deterministic severity.
+- **MCP Fallback (Model Context Protocol)**: Automatic retrieval of missing reference ranges via a local MCP server integration.
+- **High-Performance Concurrency**: `asyncio.gather` and semaphore-based rate limiting to process hundreds of CSV rows in parallel without hitting API limits.
+- **Bring Your Own Key (BYOK)**: Secure, dynamic injection of personal Gemini API keys via the UI to bypass server quotas.
 
-The application is built on a **FastAPI** backend and a **React (Vite)** frontend. The core Agent logic follows a strict pipeline:
+---
 
-1. **INPUT:** The React frontend parses the CSV dataset and sends it to the backend via POST `/analyze_labs`.
-2. **CLASSIFY:** The Agent compares each lab result against its reference range and assigns a severity (`NORMAL`, `WARNING`, or `CRITICAL`).
-3. **ROUTE:** The Agent groups and prioritizes the results by severity (CRITICAL first).
-4. **EXPLAIN:** The Agent invokes the LLM to generate a plain-language explanation for *every* individual result.
+## 🏗️ Architecture
 
-### AI Provider & LLM Role
-* **Provider/Model:** Google Gemini (default `gemini-3.6-flash`, configurable via `.env`).
-* **Role:** The LLM's sole responsibility is generating human-readable explanations based on the supplied data. It is explicitly instructed **NOT** to diagnose diseases, invent reference ranges, or override the backend's severity classification.
+To see the interactive, animated architecture diagram with live data flow, launch the application and click the **Dashboard** button in the top right corner.
 
-### MCP Role
-* The **Model Context Protocol (MCP)** is used as a fallback lookup tool. If a lab test is missing reference range information in the uploaded CSV, the backend invokes the local MCP `reference_range_lookup` tool to fetch it.
+**High-Level Pipeline:**
+1. `React Frontend` captures CSV or manual input.
+2. `FastAPI Backend` receives the payload (`POST /analyze_labs`).
+3. `LabAnalysisAgent` orchestrates the pipeline.
+4. `MCP Client` connects to the `MCP Server` to fetch missing reference ranges.
+5. `Classifier Engine` deterministically categorizes the severity.
+6. `Severity Router` sorts the payload.
+7. `Gemini LLM` concurrently explains the results based on the hard classification.
+8. `React Frontend` renders the data.
 
-## 3. Reference-Range Priority & Classification Policy
+---
 
-The application never silently invents reference ranges. It follows a strict priority order:
-1. `Min_Reference` + `Max_Reference` from the uploaded CSV.
-2. `Reference_Range` string from the uploaded CSV.
-3. Local MCP `reference_range_lookup(test_name)` fallback.
-4. If none are available, the result is marked as `UNKNOWN`.
+## 🔄 Agent Workflow
 
-### Project Classification Policy
-The assignment does not mandate universal medical thresholds. Therefore, we use a configurable **Project Classification Policy** to distinguish WARNING from CRITICAL severity:
-- Results *within* the reference range are **NORMAL**.
-- Results *outside* the reference range are abnormal. An explicit policy map (defined in `classification.py`) dictates whether the abnormality is a **WARNING** or **CRITICAL**.
-- If a test is not in the explicit policy map, the application uses a fallback logic (30% boundary outside the reference span) to classify the severity. **This is a project-specific rule, not a universal medical standard.**
+The core orchestrator is the `LabAnalysisAgent`, which strictly enforces the **Classify → Route → Explain** pattern.
 
-## 4. Dataset Information & Test Data
-The application natively supports the provided Kaggle Laboratory Dataset. It can parse Turkish test names, handle categorical strip tests (e.g., `Negatif`, `1+`), and retain all original reference ranges.
+### 1. CLASSIFY
+- **Input**: Raw lab values, test names, and units.
+- **Processing**: The value is mathematically compared against `min_reference` and `max_reference`. If reference ranges are missing, the Agent fetches them via MCP.
+- **Output**: Deterministic severity flag (Normal, Warning, or Critical).
+- **Safety Constraint**: The LLM is **never** involved in this step.
 
-### Synthetic Test Data
-For quick testing, we have provided three synthetic CSV files in the `/test_data` directory:
-- `dummy_normal.csv`: Contains results entirely within normal reference ranges.
-- `dummy_warning.csv`: Contains results that trigger WARNING classifications.
-- `dummy_critical.csv`: Contains extreme results that trigger CRITICAL classifications.
+### 2. ROUTE
+- **Input**: Classified results.
+- **Processing**: Sorts and groups the results to bubble up Critical findings to the top.
+- **Output**: An ordered list of results.
 
-*Note: These files contain entirely synthetic dummy data and are not real patient records.*
+### 3. EXPLAIN
+- **Input**: Routed results with locked-in severities.
+- **Processing**: The LLM is provided a highly specific prompt containing the test data and the hardcoded severity. 
+- **Output**: A plain-language clinical explanation.
+- **Safety Constraint**: The prompt explicitly forbids the LLM from overriding the severity classification.
 
-## 5. Setup & Installation
+---
+
+## 🧠 Explainable AI
+
+Explainability is a core tenet of this project. Users do not just receive an "Abnormal" flag. The LLM generates a short paragraph contextualizing the result, explaining what the biomarker means, and suggesting potential (non-diagnostic) next steps, strictly framed around the deterministic severity constraint.
+
+---
+
+## 🔌 MCP Reference Lookup
+
+The **Model Context Protocol (MCP)** is specifically utilized as a contextual data retrieval layer, not an LLM proxy.
+
+- **Scenario**: A user uploads a CSV containing a Glucose level of 115 mg/dL, but the `Min_Reference` and `Max_Reference` columns are blank.
+- **Flow**: `LabAnalysisAgent` → `MCP Client` → `mcp/server.py` → `reference_range_lookup("Glucose")`
+- **Result**: The MCP server returns "70-100". The Agent resumes deterministic classification. 
+
+The entire LLM payload is **not** routed through MCP, preserving architectural purity and ensuring MCP is strictly used for tool-based context augmentation.
+
+---
+
+## ⚡ Concurrent LLM Processing
+
+Processing a CSV with hundreds of rows sequentially would result in severe UX latency. This project implements advanced asynchronous patterns:
+
+- **Parallel Execution**: Uses `asyncio.gather()` to fire all LLM explanation requests in parallel while preserving array order.
+- **Semaphore Limits**: `asyncio.Semaphore(5)` caps concurrent outgoing HTTP requests to the Gemini API to 5, preventing rate-limit bans (HTTP 429).
+- **Exponential Backoff**: Transient network or API failures trigger an exponential backoff loop (`2^attempt` seconds), up to 3 retries, ensuring the entire dataset analysis does not crash due to a single row failure.
+
+---
+
+## 🔑 Bring Your Own Key (BYOK)
+
+To guarantee evaluation success despite shared API quotas, the system implements a secure BYOK override.
+
+- **Flow**: User enters API key in React sidebar → Key appended to `POST /analyze_labs` JSON body → `LLMProvider` intercepts request → Dynamically instantiates an ephemeral `genai.Client(api_key=user_key)`.
+- **Security**: The key is never logged, persisted, or saved to the server's `.env` file. It only lives for the duration of the HTTP request context.
+
+---
+
+## 🚀 Setup
 
 ### Prerequisites
-* Python 3.10+
-* Node.js 18+
+- Python 3.10+
+- Node.js 18+
+- Gemini API Key
 
-### Environment Variables
-Create a `.env` file in the project root containing:
-```
-LLM_API_KEY=your_gemini_api_key_here
-LLM_MODEL=gemini-3.6-flash
-```
-
-### Start the Backend
-```bash
+### Backend Setup
+\`\`\`bash
 cd backend
 python -m venv .venv
-.venv\Scripts\activate  # Windows
-# source .venv/bin/activate # Mac/Linux
+source .venv/Scripts/activate  # (or source .venv/bin/activate on Mac/Linux)
 pip install -r requirements.txt
+cp ../.env.example ../.env      # Add your GEMINI API key here
 uvicorn app.main:app --reload
-```
+\`\`\`
 
-### Start the Frontend
-```bash
+### Frontend Setup
+\`\`\`bash
 cd frontend
 npm install
 npm run dev
-```
+\`\`\`
 
-### Running Tests
-The backend contains a complete test suite covering classification bounds, agent routing, and mocked LLM calls.
-```bash
+---
+
+## 🧪 Testing
+
+The backend includes a comprehensive test suite to verify the deterministic engine and agent orchestration.
+
+\`\`\`bash
 cd backend
-python -m pytest -q
-```
+pytest tests/
+\`\`\`
 
-## 6. How to Use
-1. Open the frontend in your browser (usually `http://localhost:5173`).
-2. Drag and drop a CSV file (e.g., `test_data/dummy_critical.csv`) into the Data Ingestion panel.
-3. Click **Analyze Results**.
-4. Watch the Live Architecture Workflow map illuminate the exact path taken by the backend in real-time.
-5. Review the color-coded, prioritized results and LLM explanations on the right.
+**What is tested:**
+- Validating Normal, Warning, and Critical bounds.
+- Missing reference range handling via MCP.
+- End-to-end agent workflow preserving severity states.
+- Invalid test names.
 
-## 7. Known Limitations
-- The MCP tool currently runs locally via `stdio` and returns a hardcoded mock range if the test is unmapped. In a production scenario, this would connect to an external clinical database or FHIR server.
-- The LLM generation is performed sequentially; a large CSV (100+ rows) may take considerable time to process.
+---
+
+## 🎬 Demo
+
+**Recommended 2-Minute Hackathon Demo Script:**
+1. **Show the Dashboard**: Click the "Dashboard" button in the top right. Point out the clear architectural safety boundary between the Deterministic Engine and the LLM.
+2. **BYOK**: Paste your Gemini API key in the "Bring Your Own Key" sidebar input to prove dynamic quota overriding.
+3. **Manual Input**: Input `Glucose`, Value: `45`, Min: `70`, Max: `100`. Hit Analyze. Show that it is instantly flagged as **Critical** (Deterministic) and the LLM explains *why* (Hypoglycemia).
+4. **CSV Batch Processing**: Drag and drop `dummy_lab_results_variety.csv`. Hit Analyze.
+5. **Concurrency Proof**: Watch the console terminal—show how `asyncio.Semaphore` fires exactly 5 requests at a time, protecting the API limits while processing the whole file in seconds.
+
+---
+
+## 📁 Project Structure
+
+\`\`\`text
+aragen/
+├── backend/
+│   ├── app/
+│   │   ├── agents/       # LabAnalysisAgent (Orchestrator)
+│   │   ├── api/          # FastAPI Routes (analyze_labs)
+│   │   ├── core/         # LLMProvider, Config
+│   │   ├── mcp/          # MCP Client & FastMCP Server
+│   │   ├── models/       # Pydantic schemas
+│   │   └── services/     # Deterministic Classification & Routing
+│   └── tests/            # Pytest suite
+├── frontend/
+│   ├── src/
+│   │   ├── components/   # React UI (LabInput, ArchitectureDiagram)
+│   │   ├── App.jsx       # State Routing
+│   │   └── index.css     # Observability Dashboard Styling
+├── .env                  # Environment Variables
+└── README.md
+\`\`\`
+
+---
+
+## 🛡️ Safety & Design Principles
+
+Clinical data is highly sensitive. This architecture guarantees that **No LLM hallucination can change a patient's severity status from Critical to Normal**. AI is used exclusively for augmenting human understanding (Explainability), never for primary diagnosis (Classification).

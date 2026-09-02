@@ -4,7 +4,6 @@ from app.api.endpoints import router as api_router
 
 app = FastAPI(title="Clinical Lab Results Analyzer AI Agent")
 
-# Configure CORS for the frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

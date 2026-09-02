@@ -1,8 +1,9 @@
 import os
 import json
+import asyncio
 from google import genai
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -18,10 +19,12 @@ class LLMProvider:
         
         self.client = genai.Client(api_key=self.api_key) if self.api_key else None
 
-    async def generate_explanation(self, test_name: str, value: str, unit: str, ref_range: str, severity: str) -> ExplanationResponse:
+    async def generate_explanation(self, test_name: str, value: str, unit: str, ref_range: str, severity: str, api_key: Optional[str] = None) -> ExplanationResponse:
         # Dynamically reload key in case it was added to .env while server was running
         load_dotenv()
-        current_key = os.getenv("LLM_API_KEY", "")
+        
+        # Use user-provided key if available, else fall back to .env key
+        current_key = api_key if api_key else os.getenv("LLM_API_KEY", "")
         
         if not current_key:
             return ExplanationResponse(
@@ -56,29 +59,37 @@ class LLMProvider:
         }}
         """
         
-        try:
-            # We use the blocking call in an async context, ideally we'd use an async client
-            # But the genai SDK handles it cleanly or we can wrap it if needed. 
-            # For this MVP, standard execution is fine since it's a lightweight backend.
-            response = client.models.generate_content(
-                model=self.model_name,
-                contents=prompt,
-                config=genai.types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema=ExplanationResponse
+        max_retries = 3
+        base_delay = 2
+        
+        for attempt in range(max_retries):
+            try:
+                # We use the blocking call in an async context, ideally we'd use an async client
+                # But the genai SDK handles it cleanly or we can wrap it if needed. 
+                # For this MVP, standard execution is fine since it's a lightweight backend.
+                response = client.models.generate_content(
+                    model=self.model_name,
+                    contents=prompt,
+                    config=genai.types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        response_schema=ExplanationResponse
+                    )
                 )
-            )
-            
-            if hasattr(response, 'parsed') and response.parsed:
-                return response.parsed
                 
-            data = json.loads(response.text)
-            return ExplanationResponse(**data)
-            
-        except Exception as e:
-            return ExplanationResponse(
-                explanation=f"Error generating clinical explanation. Please consult a healthcare professional. (Internal error: {str(e)})",
-                next_steps=["Discuss with a healthcare professional."]
-            )
+                if hasattr(response, 'parsed') and response.parsed:
+                    return response.parsed
+                    
+                data = json.loads(response.text)
+                return ExplanationResponse(**data)
+                
+            except Exception as e:
+                if attempt == max_retries - 1:
+                    return ExplanationResponse(
+                        explanation="Explanation temporarily unavailable.",
+                        next_steps=["Discuss with a healthcare professional."]
+                    )
+                
+                # Bounded exponential backoff before retry
+                await asyncio.sleep(base_delay * (2 ** attempt))
 
 llm_provider = LLMProvider()

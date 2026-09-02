@@ -39,15 +39,9 @@ def determine_numeric_severity(test_name: str, val: float, low: float, high: flo
     
     if config:
         crit_low, crit_high = config
-    else:
-        # Generic fallback for unmapped tests: 30% outside bounds
-        span = high - low
-        crit_low = low - (span * 0.3)
-        crit_high = high + (span * 0.3)
-        
-    if val <= crit_low or val >= crit_high:
-        return "CRITICAL"
-        
+        if val <= crit_low or val >= crit_high:
+            return "CRITICAL"
+            
     return "WARNING"
 
 def classify_categorical(result: str, reference: str) -> str:

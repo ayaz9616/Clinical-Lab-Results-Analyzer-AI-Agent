@@ -12,7 +12,7 @@ agent = LabAnalysisAgent()
 @router.post("/analyze_labs", response_model=LabAnalysisResponse)
 async def analyze_labs(request: LabAnalysisRequest):
     # Agent handles the Classify -> Route -> Explain pipeline
-    routed_results = await agent.analyze(request.labs, request.client_id)
+    routed_results = await agent.analyze(request.labs, request.client_id, request.api_key)
     
     # Calculate summary
     summary = AnalysisSummary(

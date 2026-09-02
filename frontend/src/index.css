@@ -139,3 +139,249 @@ body {
   transform: none;
   box-shadow: none;
 }
+
+/* --- Documentation Page Styles --- */
+.docs-container {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  background-color: transparent;
+  color: #e5e5e5;
+  font-family: 'Inter', sans-serif;
+}
+
+.docs-sidebar {
+  width: 250px;
+  min-width: 250px;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 24px 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.docs-nav-group {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #666;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 16px 24px 8px;
+}
+
+.docs-nav-item {
+  padding: 8px 24px;
+  font-size: 0.85rem;
+  color: #a0a0a0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.docs-nav-item:hover {
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.docs-nav-item.active {
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.08);
+  border-left: 3px solid var(--accent-primary);
+  padding-left: 21px;
+}
+
+.docs-content {
+  flex: 1;
+  padding: 24px 80px 64px 80px;
+  overflow-y: auto;
+}
+
+.docs-section {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.docs-title {
+  font-size: 2.25rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 24px;
+  letter-spacing: -0.02em;
+}
+
+.docs-subtitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #fff;
+  margin-top: 48px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.docs-paragraph {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #a0a0a0;
+  margin-bottom: 24px;
+}
+
+.docs-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0 0 24px 0;
+}
+
+.docs-list li {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #a0a0a0;
+  margin-bottom: 12px;
+  padding-left: 20px;
+  position: relative;
+}
+
+.docs-list li::before {
+  content: "•";
+  color: var(--accent-primary);
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+}
+
+.docs-list strong {
+  color: #fff;
+}
+
+.docs-code-block {
+  background-color: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 24px;
+  overflow-x: auto;
+  margin: 32px 0;
+}
+
+.docs-code-block pre {
+  margin: 0;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #4ade80; /* matrix green for diagram */
+}
+
+/* --- Architecture Diagram Styles --- */
+.arch-container {
+  width: 100%;
+  padding: 24px 0;
+}
+
+.arch-svg {
+  width: 100%;
+  height: auto;
+}
+
+.arch-node {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  font-family: 'Inter', sans-serif;
+}
+
+.arch-node-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.arch-node-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.arch-node-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.arch-node-status.online, .arch-node-status.ready, .arch-node-status.active {
+  background: rgba(16, 185, 129, 0.1);
+  color: #34d399;
+}
+
+.arch-node-status.deterministic, .arch-node-status.routing {
+  background: rgba(59, 130, 246, 0.1);
+  color: #60a5fa;
+}
+
+.arch-node-status.explaining {
+  background: rgba(168, 85, 247, 0.1);
+  color: #c084fc;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+.arch-node-subtitle {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.arch-path {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.15);
+  stroke-width: 2;
+}
+
+.arch-path-subtle {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.05);
+  stroke-width: 2;
+}
+
+.arch-particle {
+  fill: #10b981;
+  filter: url(#glow);
+}
+
+.arch-particle-static {
+  fill: #10b981;
+}
+
+.arch-boundary-text {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  fill: #ef4444;
+  opacity: 0.8;
+}
+
+.arch-legend-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  fill: #fff;
+}
+
+.arch-legend-text {
+  font-size: 0.8rem;
+  fill: #94a3b8;
+}
