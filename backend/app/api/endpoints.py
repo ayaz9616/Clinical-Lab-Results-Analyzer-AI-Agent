@@ -11,8 +11,8 @@ async def analyze_labs(request: LabAnalysisRequest):
     results = []
     
     for lab in request.labs:
-        classification = classify_result(lab)
-        ref_range = get_reference_range(lab.test_name)
+        classification = await classify_result(lab)
+        ref_range = await get_reference_range(lab.test_name)
         
         result = LabTestResult(
             test_name=lab.test_name,

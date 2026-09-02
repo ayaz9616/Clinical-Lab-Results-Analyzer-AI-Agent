@@ -4,4 +4,4 @@ pydantic
 pydantic-settings
 python-dotenv
 google-genai
-mcp
+mcp<2

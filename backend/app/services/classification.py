@@ -1,4 +1,7 @@
+from typing import Optional
 from app.models.lab import LabTestInput, ReferenceRange
+from app.mcp.client import execute_mcp_tool
+import re
 
 # Hardcoded reference ranges based on the dataset
 REFERENCE_RANGES = {
@@ -31,13 +34,21 @@ REFERENCE_RANGES = {
     "Bilirubin (Strip)": {"text_value": "Negatif"},
 }
 
-def get_reference_range(test_name: str) -> ReferenceRange:
+async def get_reference_range(test_name: str) -> Optional[ReferenceRange]:
     if test_name in REFERENCE_RANGES:
         return ReferenceRange(**REFERENCE_RANGES[test_name])
+        
+    # If not in hardcoded dict, call MCP tool
+    result = await execute_mcp_tool('reference_range_lookup', {'test_name': test_name})
+    
+    match = re.search(r"(\d+(\.\d+)?)\s*-\s*(\d+(\.\d+)?)", result)
+    if match:
+        return ReferenceRange(low=float(match.group(1)), high=float(match.group(3)))
+        
     return None
 
-def classify_result(test: LabTestInput) -> str:
-    ref = get_reference_range(test.test_name)
+async def classify_result(test: LabTestInput) -> str:
+    ref = await get_reference_range(test.test_name)
     if not ref:
         return "UNKNOWN"
     
@@ -55,8 +66,6 @@ def classify_result(test: LabTestInput) -> str:
             if ref.low <= val <= ref.high:
                 return "NORMAL"
             
-            # Simple logic for warning vs critical.
-            # > 20% outside range = CRITICAL, else WARNING
             range_span = ref.high - ref.low
             margin = range_span * 0.2
             
