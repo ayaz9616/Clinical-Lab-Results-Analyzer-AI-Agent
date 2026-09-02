@@ -115,21 +115,21 @@ To guarantee evaluation success despite shared API quotas, the system implements
 - Gemini API Key
 
 ### Backend Setup
-\`\`\`bash
+```bash
 cd backend
 python -m venv .venv
 source .venv/Scripts/activate  # (or source .venv/bin/activate on Mac/Linux)
 pip install -r requirements.txt
 cp ../.env.example ../.env      # Add your GEMINI API key here
 uvicorn app.main:app --reload
-\`\`\`
+```
 
 ### Frontend Setup
-\`\`\`bash
+```bash
 cd frontend
 npm install
 npm run dev
-\`\`\`
+```
 
 ---
 
@@ -137,10 +137,10 @@ npm run dev
 
 The backend includes a comprehensive test suite to verify the deterministic engine and agent orchestration.
 
-\`\`\`bash
+```bash
 cd backend
 pytest tests/
-\`\`\`
+```
 
 **What is tested:**
 - Validating Normal, Warning, and Critical bounds.
@@ -163,7 +163,7 @@ pytest tests/
 
 ## 📁 Project Structure
 
-\`\`\`text
+```text
 aragen/
 ├── backend/
 │   ├── app/
@@ -181,7 +181,7 @@ aragen/
 │   │   └── index.css     # Observability Dashboard Styling
 ├── .env                  # Environment Variables
 └── README.md
-\`\`\`
+```
 
 ---
 
