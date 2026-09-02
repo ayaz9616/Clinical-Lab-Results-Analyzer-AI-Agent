@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { FileUp, Database, CheckCircle, AlertCircle } from 'lucide-react';
 import Papa from 'papaparse';
 
-export default function LabInput({ onDataLoaded }) {
+export default function LabInput({ onDataLoaded, isProcessing }) {
   const [dragActive, setDragActive] = useState(false);
   const [fileStatus, setFileStatus] = useState('idle'); // idle, loaded, error
   const [errorMessage, setErrorMessage] = useState('');
@@ -155,9 +155,9 @@ export default function LabInput({ onDataLoaded }) {
         <button 
           className="btn-primary" 
           onClick={handleAnalyze} 
-          disabled={fileStatus !== 'loaded'}
+          disabled={fileStatus !== 'loaded' || isProcessing}
         >
-          Analyze Results
+          {isProcessing ? 'Analyzing...' : 'Analyze Results'}
         </button>
       </div>
     </div>
