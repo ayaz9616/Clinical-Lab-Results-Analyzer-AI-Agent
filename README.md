@@ -1,6 +1,19 @@
+<div align="center">
+  
 # 🏥 Clinical Lab Intelligence
 
-Clinical Lab Intelligence is a full-stack, AI-powered laboratory results analyzer designed to help healthcare professionals and patients rapidly ingest, classify, route, and explain clinical lab results. 
+**A full-stack, AI-powered laboratory results analyzer built for precision, speed, and safety.**
+
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Frontend-10b981?style=for-the-badge&logo=vercel)](https://clinical-lab-results-analyzer-ai-agent-frontend.vercel.app/) <!-- Update this link if you have a custom Vercel domain -->
+[![Backend API](https://img.shields.io/badge/Backend_API-Render-06b6d4?style=for-the-badge&logo=render)](https://clinical-lab-results-analyzer-ai-agent.onrender.com)
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white)]()
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)]()
+[![React](https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB)]()
+[![Gemini](https://img.shields.io/badge/Gemini-AI-8E75B2?style=flat-square&logo=google&logoColor=white)]()
+
+</div>
+
+---
 
 Instead of asking a Large Language Model (LLM) to dangerously "guess" if a patient is critical, this application pioneers a **hybrid deterministic-AI pipeline**. Hardcoded mathematical bounds ensure 100% accurate medical severity classification, while asynchronous LLM instances generate rich, personalized, plain-language clinical explanations for each result.
 
